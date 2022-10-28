@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="Screen" width="448" height="448" style="border:0px solid #d3d3d3;padding:0;">
+Your browser is not supported, sorry man. </canvas>
+
+<script>
+
+//ZX Spectrum Color Palette
+const blackR = 0x00;
+const blackG = 0x00;
+const blackB = 0x00;
+const blueR = 0x00;		
+const blueG = 0x00;
+const blueB = 0xFF;
+const redR = 0xFF;
+const redG = 0x00;
+const redB = 0x00;
+const magentaR = 0xFF;
+const magentaG = 0x00;
+const magentaB = 0xFF;
+const greenR = 0x00;
+const greenG = 0xFF;
+const greenB = 0x00;
+const cyanR = 0x00;
+const cyanG = 0xFF;
+const cyanB = 0xFF;
+const yellowR = 0xFF;
+const yellowG = 0xFF;
+const yellowB = 0x00;
+const whiteR = 0xFF;
+const whiteG = 0xFF;
+const whiteB = 0xFF;
+
+//Variables
+var FPS = 25;
+var gameState = 0;
+var frameCount = 0;
+var shotX = -1, shotY = -1, mX = -1, mY = -1, expX = -1, expY = -1;
+var lturn = true;
+var c 	= document.getElementById("Screen");
+var scaleF = Math.floor((c.width / 32));
+var ctx = c.getContext("2d");
+var imgData = ctx.createImageData(32,32);
+var realScreen = new Array(32);
+for (i=0; i < 32; i++) {
+	realScreen[i] = new Array(32);
+}
+
+//GRAPHIC DATA
+var loadingText = [ [0,0,0,0,0,2,0,0,0,2,0,0,2,0,2,0,0,0,0,0,0,2,2,0,0,0,0,0],
+					[0,2,0,2,0,2,2,0,2,0,2,0,2,0,0,0,2,0,0,0,2,0,0,0,0,2,0,0],
+					[0,0,2,0,0,2,0,2,2,2,0,0,2,0,2,0,2,2,2,0,2,0,2,0,2,0,2,0],
+					[0,2,0,2,0,2,2,0,0,2,2,0,2,0,2,0,2,0,2,0,2,2,0,0,0,2,0,0]];
+					
+var titleText1 	= [ [0,0,0,0,0,0,0,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7],
+					[0,2,2,0,2,2,0,7,7,7,7,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0],
+					[0,2,2,0,2,2,0,7,7,7,0,0,1,1,0,0,1,1,0,0,1,0,0,0,1,0],
+					[0,2,2,0,2,2,0,7,0,0,0,1,0,0,0,1,0,0,1,0,1,1,0,1,1,0],
+					[0,2,2,0,2,2,0,0,0,6,0,1,0,0,0,1,0,0,1,0,1,0,1,0,1,0],
+					[0,2,2,0,2,2,2,2,0,6,0,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0],
+					[0,2,2,2,2,2,2,2,0,0,0,1,0,0,0,1,0,0,1,0,1,0,7,0,1,0],
+					[0,2,2,0,0,0,0,0,0,7,0,0,1,1,0,0,1,1,0,0,1,0,7,0,1,0],
+					[0,2,2,0,7,7,7,7,7,7,7,0,0,0,0,0,0,0,0,0,0,0,7,0,0,0],
+					[0,0,0,0,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7]];
+					
+var titleText2 	= [ [7,7,7,4,4,4,0,0,0,4,4,4,0,0,0,4,4,4,7,7],
+					[0,7,7,4,7,7,7,0,7,4,7,4,0,7,0,7,4,7,7,0],
+					[0,0,7,4,4,4,7,0,7,4,4,4,0,0,7,7,4,7,0,0],
+					[0,7,7,7,7,4,7,0,7,4,7,4,0,7,0,7,4,7,7,0],
+					[7,7,7,4,4,4,7,0,7,4,7,4,0,7,0,7,4,7,7,7]];
+
+function clearScreen() {
+	for(i=0; i<32; i++) {
+		for(j=0; j<32; j++) {
+			realScreen[i][j] = 0;
+		}
+	}
+}
+
+function loadingScreen() {
+	var t;
+	for(i=0; i<32; i++) {
+		t = Math.floor(Math.random() * 8);
+		for(j=0; j<32; j++) {
+			realScreen[i][j] = t;
+		}
+	}
+	for(i=4; i<32-4;i++) {
+		for(j=4; j<32-4;j++) {
+			realScreen[i][j] = 0;
+		}	
+	}
+	for(i=4; i<32-4;i++) {
+		for(j=2; j<32-2;j++) {
+			if (i==8) {
+				realScreen[i][j] = loadingText[0][j-2];
+			} else if (i == 9){
+				realScreen[i][j] = loadingText[1][j-2];
+			} else if (i == 10) {
+				realScreen[i][j] = loadingText[2][j-2];
+			} else if (i == 11) {
+				realScreen[i][j] = loadingText[3][j-2];
+			} else {
+				realScreen[i][j] = 0;
+			}
+		}	
+	}
+}
+
+function titleScreen() {
+	for(i=0; i<32; i++) {
+		for(j=0; j<32; j++) {
+			realScreen[i][j] = 7;
+		}
+	}
+	
+	for(i=0; i<26; i++) {
+		for(j=0; j<10; j++) {
+			realScreen[j + 2][i + 3] = titleText1[j][i];
+		}
+	}
+	for(i=0; i<20; i++) {
+		for(j=0; j<5; j++) {
+			realScreen[j + 18][i + 6] = titleText2[j][i];
+		}
+	}
+	
+}
+
+function gameScreen() {
+	//draw sky
+	for(i=0; i<31; i++) {
+		for(j=0; j<32; j++) {
+			realScreen[i][j] = 0;
+		}
+	}
+	
+	//draw terrain
+	for(j=0; j<32; j++) {
+		realScreen[31][j] = 4;
+	}
+	
+	//draw AA guns
+	if (lturn) {
+		realScreen[28][4] = 6;
+	} else {
+		realScreen[28][4] = 7;
+	}
+	realScreen[29][3] = 7;
+	realScreen[30][2] = 7;
+	realScreen[30][3] = 7;
+	realScreen[30][4] = 7;
+	if (lturn) {
+		realScreen[28][28] = 7;
+	} else {
+		realScreen[28][28] = 6;
+	}
+	realScreen[29][29] = 7;
+	realScreen[30][28] = 7;
+	realScreen[30][29] = 7;
+	realScreen[30][30] = 7;
+	
+	//draw missiles
+	if (shotX >= 0 && shotY <= 27) {
+		
+		realScreen[mY][mX] = 6;
+	}
+	if (expX != -1 && shotY <= 27) {
+		
+		realScreen[expY][expX] = 2;
+		if ((expY - 1) >= 0) {
+			realScreen[expY-1][expX] = 2;
+		}
+		realScreen[expY][expX+1] = 2;
+		realScreen[expY+1][expX] = 2;
+		
+		if ((expX - 1) >= 0) {
+			realScreen[expY][expX-1] = 2;
+		}
+	}
+	//draw enemies
+	
+	
+	
+}
+
+function drawDot(initialx, r, g, b) {
+ 
+	var index = initialx *4;
+	imgData.data[index] 	    =	r;
+	imgData.data[index+1] 	=	g;
+	imgData.data[index+2] 	=	b;
+	imgData.data[index+3] 	=	255;
+
+}
+
+function updateBuffer () {
+	for(i=0; i<32; i++) {
+		for(j=0; j<32; j++) {
+			switch(realScreen[i][j]) {
+				case 0:drawDot(i*32+j, blackR, blackG, blackB);
+						break;
+				case 1:drawDot(i*32+j, blueR, blueG, blueB);
+						break;
+				case 2:drawDot(i*32+j, redR, redG, redB);
+						break;
+				case 3:drawDot(i*32+j, magentaR, magentaG, magentaB);
+						break;
+				case 4:drawDot(i*32+j, greenR, greenG, greenB);
+						break;
+				case 5:drawDot(i*32+j, cyanR, cyanG, cyanB);
+						break;
+				case 6:drawDot(i*32+j, yellowR, yellowG, yellowB);
+						break;
+				case 7:drawDot(i*32+j, whiteR, whiteG, whiteB);
+						break;
+				default:document.write("ERROR");
+						
+			}	
+		}
+	}
+}
+
+function scaleImageData(imageData, scale) {
+    var scaled = ctx.createImageData(imageData.width * scale, imageData.height * scale);
+    var subLine = ctx.createImageData(scale, 1).data
+    for (var row = 0; row < imageData.height; row++) {
+        for (var col = 0; col < imageData.width; col++) {
+            var sourcePixel = imageData.data.subarray(
+                (row * imageData.width + col) * 4,
+                (row * imageData.width + col) * 4 + 4
+            );
+            for (var x = 0; x < scale; x++) subLine.set(sourcePixel, x*4)
+            for (var y = 0; y < scale; y++) {
+                var destRow = row * scale + y;
+                var destCol = col * scale;
+                scaled.data.set(subLine, (destRow * scaled.width + destCol) * 4)
+            }
+        }
+    }
+
+    return scaled;
+}
+
+function dumpBuffer() {
+	updateBuffer();
+	ctx.putImageData(scaleImageData(imgData,scaleF),0,0);
+}
+
+function checkBox (x, y, x1, y1, x2, y2) {
+	temp = false;
+	
+	if (x >= x1 && x <= x2) {
+		if (y >= y1 && y <= y2) {
+			temp = true;
+		}
+	}
+	
+	return temp;
+}
+
+
+function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    };
+}
+
+function doMouseDown(event) {
+	var pos = getMousePos(c, event);
+	cx = pos.x;
+	cy = pos.y;
+	switch (gameState) {
+		case 0: break;
+		case 1: 
+				if (checkBox(cx, cy, 134, 260, 340, 330)) {
+					frameCount = 0;
+					gameState = 2;
+				}
+				break;
+		case 2: if (mX == -1) {
+					shotX = Math.floor(cx / scaleF);
+					shotY = Math.floor(cy / scaleF);
+					if (shotY > 27) {
+						break;
+					}
+					if (lturn) {
+						mX = 5;
+						mY = 27;
+						lturn = false;
+					} else {
+						lturn = true;
+						mX = 27
+						mY = 27;
+					}
+				}
+				break;
+		default:break;
+	}
+}
+
+
+function gameLoop() {
+		frameCount += 1;
+		// update 32*32 buffer
+		switch (gameState) {
+			case 0: 	loadingScreen();
+						break;
+			case 1:		titleScreen();
+						break;
+			case 2:		gameScreen();
+						break;
+			default: 	clearScreen();
+		}
+		
+		// write buffer to canvas and scale
+		dumpBuffer();
+		
+		// game Logic
+		switch (gameState) {
+			case 0: 	if (frameCount == (FPS * 4)) {
+							gameState = 1;
+							frameCount = 0;
+						}
+						break;
+			case 2:		if (frameCount >= 1 && mX != -1) {
+							frameCount = 0;
+							dx = Math.abs(shotX - mX);
+							dy = Math.abs(shotY - mY);
+							err = dx - dy;
+							D = (2*dy) - dx;
+							if (mX < shotX) {
+								sX = 1;
+							} else {
+								sX = -1;
+							}
+							if (mY < shotY) {
+								sY = 1;
+							} else {
+								sY = -1;
+							}
+							if (mX == shotX && mY == shotY) {
+								expX = shotX;
+								expY = shotY;
+								expCount = FPS;
+								mX = -1;
+								shotX = -1;	
+							}
+							e2 = err * 2;
+							if (e2 > -dy) {
+								err = err - dy;
+								mX = mX + sX;
+							} 
+							if (e2 < dx) {
+								err = err + dx;
+								mY = mY + sY;
+							}
+						}
+						expCount -= 1;
+						if (expCount == 0) {
+							expX = -1;
+						}
+		}
+}
+
+
+//Main Code
+c.addEventListener("mousedown", doMouseDown, false);
+setInterval(function() {
+  gameLoop();
+}, 1000/FPS);
+
+
+</script>
+
+</body>
+</html>
